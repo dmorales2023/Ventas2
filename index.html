@@ -12,7 +12,13 @@
         }
         h1 {
             text-align: center;
-            font-size: 3em;
+            font-size: 4em; /* Aumentado el tamaño del título */
+        }
+        h2 {
+            font-size: 2.5em; /* Aumentado el tamaño de los subtítulos */
+        }
+        h3 {
+            font-size: 2em; /* Aumentado el tamaño del total y cambio */
         }
         .container {
             width: 90%;
@@ -25,7 +31,11 @@
             margin-bottom: 10px;
         }
         .product img, .cart-item img {
-            max-width: 100px;
+            max-width: 150px;
+            height: auto;
+        }
+        .product span, .cart-item span {
+            font-size: 1.5em; /* Aumentado el tamaño del nombre de los productos */
         }
         input[type="file"] {
             display: block;
@@ -35,10 +45,19 @@
         }
         @media (max-width: 600px) {
             h1 {
+                font-size: 3em;
+            }
+            h2 {
                 font-size: 2em;
             }
+            h3 {
+                font-size: 1.5em;
+            }
             .product img, .cart-item img {
-                max-width: 50px;
+                max-width: 100px;
+            }
+            .product span, .cart-item span {
+                font-size: 1.2em;
             }
         }
     </style>
