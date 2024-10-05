@@ -3,232 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario y Ventas</title>
+    <title>CANDY DANIELA</title>
     <style>
-        img { max-width: 100px; margin-right: 10px; }
-        .product, .cart-item { margin-bottom: 15px; }
+        body {
+            background-color: pink;
+            color: purple;
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            text-align: center;
+            font-size: 3em;
+        }
+        .container {
+            width: 90%;
+            margin: auto;
+        }
+        .product, .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .product img, .cart-item img {
+            max-width: 100px;
+        }
+        input[type="file"] {
+            display: block;
+        }
+        input[type="number"].quantity {
+            width: 50px;
+        }
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2em;
+            }
+            .product img, .cart-item img {
+                max-width: 50px;
+            }
+        }
     </style>
 </head>
 <body>
-
-    <h1>Agregar Producto al Inventario</h1>
-     <h1>CANDY DANIELA</h1>
-    <div>
-        <label>Nombre del Producto:</label>
-        <input type="text" id="productName" required>
+    <h1>CANDY DANIELA</h1>
+    <div class="container">
+        <h2>Agregar Producto</h2>
+        <input type="text" id="productName" placeholder="Nombre del producto">
+        <input type="number" id="productPrice" placeholder="Precio en Quetzales">
+        <input type="file" id="productImage">
+        <input type="number" id="productStock" placeholder="Disponibilidad">
+        <button onclick="addProduct()">Agregar al Inventario</button>
+        
+        <h2>Inventario</h2>
+        <div id="inventory"></div>
+        
+        <h2>Carrito de Compras</h2>
+        <div id="cart"></div>
+        <h3>Total: Q<span id="total">0</span></h3>
+        <input type="number" id="cashReceived" placeholder="Efectivo recibido" oninput="calculateChange()">
+        <h3>Cambio: Q<span id="change">0</span></h3>
+        <button onclick="finalizeSale()">Finalizar Venta</button>
     </div>
-    <div>
-        <label>Precio (Q):</label>
-        <input type="number" id="productPrice" step="0.01" required>
-    </div>
-    <div>
-        <label>Cantidad en Inventario:</label>
-        <input type="number" id="productQuantity" min="1" required>
-    </div>
-    <div>
-        <label>Imagen del Producto:</label>
-        <input type="file" id="productImage" accept="image/*" required>
-    </div>
-    <button id="addInventoryButton">Agregar al Inventario</button>
-
-    <h2>Inventario Disponible</h2>
-    <div id="inventory"></div>
-
-    <h2>Carrito de Ventas</h2>
-    <div id="cart"></div>
-    <h3>Total a Pagar: Q<span id="totalAmount">0.00</span></h3>
-    <button id="finalizeSaleButton">Finalizar Venta</button>
-    <button id="clearCartButton">Vaciar Carrito</button>
-
-    <h3>Efectivo Recibido:</h3>
-    <input type="number" id="cashReceived" required>
-    <button id="calculateChangeButton">Calcular Cambio</button>
-    <h3>Cambio: Q<span id="change">0.00</span></h3>
 
     <script>
-        let inventory = [];
+        let inventory = JSON.parse(localStorage.getItem('inventory')) || [];
         let cart = [];
-        let total = 0;
 
-        window.onload = function() {
-            loadInventory();
-            loadCart();
-            document.getElementById('addInventoryButton').onclick = addProductToInventory;
-            document.getElementById('finalizeSaleButton').onclick = finalizeSale;
-            document.getElementById('clearCartButton').onclick = clearCart;
-            document.getElementById('calculateChangeButton').onclick = calculateChange;
-        };
-
-        function addProductToInventory() {
+        function addProduct() {
             const name = document.getElementById('productName').value;
-            const price = parseFloat(document.getElementById('productPrice').value);
-            const quantity = parseInt(document.getElementById('productQuantity').value);
-            const imageInput = document.getElementById('productImage');
+            const price = document.getElementById('productPrice').value;
+            const image = document.getElementById('productImage').files[0];
+            const stock = document.getElementById('productStock').value;
 
-            if (name && !isNaN(price) && !isNaN(quantity) && quantity > 0 && imageInput.files.length > 0) {
-                const file = imageInput.files[0];
-                const reader = new FileReader();
-
-                reader.onload = function(e) {
-                    const product = { name, price, quantity, image: e.target.result };
-                    inventory.push(product);
-                    saveInventory();
-                    renderInventory();
-                    clearProductForm();
-                };
-
-                reader.readAsDataURL(file);
-            } else {
-                alert("Por favor, complete todos los campos correctamente.");
-            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const product = { name, price, image: e.target.result, stock: parseInt(stock) };
+                inventory.push(product);
+                localStorage.setItem('inventory', JSON.stringify(inventory));
+                displayInventory();
+                clearFields();
+            };
+            reader.readAsDataURL(image);
         }
 
-        function renderInventory() {
+        function displayInventory() {
             const inventoryDiv = document.getElementById('inventory');
             inventoryDiv.innerHTML = '';
-
             inventory.forEach((product, index) => {
-                const productDiv = document.createElement('div');
-                productDiv.classList.add('product');
-                productDiv.innerHTML = `
-                    <img src="${product.image}" alt="${product.name}">
-                    <p>${product.name} - Q${product.price.toFixed(2)} (Cantidad: ${product.quantity})</p>
-                    <label for="cartQuantity${index}">Cantidad:</label>
-                    <input type="number" id="cartQuantity${index}" min="1" max="${product.quantity}" value="1">
-                    <button onclick="addToCart(${index})">Agregar al Carrito</button>
-                    <button onclick="removeFromInventory(${index})">Eliminar del Inventario</button>
+                inventoryDiv.innerHTML += `
+                    <div class="product">
+                        <span>${product.name} - Q${product.price} - Stock: ${product.stock}</span>
+                        <img src="${product.image}" alt="${product.name}">
+                        <input type="number" id="quantity${index}" class="quantity" placeholder="Cantidad">
+                        <button onclick="addToCart(${index})">Agregar al Carrito</button>
+                        <button onclick="removeProduct(${index})">Eliminar</button>
+                    </div>
                 `;
-                inventoryDiv.appendChild(productDiv);
             });
         }
 
         function addToCart(index) {
+            const quantity = parseInt(document.getElementById(`quantity${index}`).value);
             const product = inventory[index];
-            const quantityToAdd = parseInt(document.getElementById(`cartQuantity${index}`).value);
-
-            if (product.quantity >= quantityToAdd && quantityToAdd > 0) {
-                const cartItem = cart.find(item => item.name === product.name);
-
-                if (cartItem) {
-                    cartItem.quantity += quantityToAdd;
-                } else {
-                    cart.push({ ...product, quantity: quantityToAdd });
-                }
-
-                product.quantity -= quantityToAdd;
-                total += product.price * quantityToAdd;
-                saveInventory();
-                saveCart();
-                renderInventory();
-                renderCart();
+            if (quantity <= product.stock && quantity > 0) {
+                cart.push({ ...product, quantity });
+                product.stock -= quantity;
+                localStorage.setItem('inventory', JSON.stringify(inventory));
+                displayInventory();
+                displayCart();
+                clearFields();
             } else {
-                alert('Cantidad no válida o producto sin suficiente stock');
+                alert('Cantidad no disponible');
             }
         }
 
-        function renderCart() {
+        function displayCart() {
             const cartDiv = document.getElementById('cart');
             cartDiv.innerHTML = '';
-
+            let total = 0;
             cart.forEach((product, index) => {
-                const cartItem = document.createElement('div');
-                cartItem.classList.add('cart-item');
-                cartItem.innerHTML = `
-                    <img src="${product.image}" alt="${product.name}">
-                    <p>${product.name} - Q${product.price.toFixed(2)} x ${product.quantity} = Q${(product.price * product.quantity).toFixed(2)}</p>
-                    <button onclick="removeFromCart(${index})">Eliminar del Carrito</button>
+                total += product.price * product.quantity;
+                cartDiv.innerHTML += `
+                    <div class="cart-item">
+                        <span>${product.name} - Q${product.price} x ${product.quantity}</span>
+                        <img src="${product.image}" alt="${product.name}">
+                        <button onclick="removeFromCart(${index})">Eliminar</button>
+                    </div>
                 `;
-                cartDiv.appendChild(cartItem);
             });
+            document.getElementById('total').innerText = total;
+        }
 
-            document.getElementById('totalAmount').innerText = total.toFixed(2);
+        function removeProduct(index) {
+            inventory.splice(index, 1);
+            localStorage.setItem('inventory', JSON.stringify(inventory));
+            displayInventory();
         }
 
         function removeFromCart(index) {
             const product = cart[index];
-            total -= product.price * product.quantity;
-
-            const inventoryItem = inventory.find(item => item.name === product.name);
-            if (inventoryItem) {
-                inventoryItem.quantity += product.quantity;
-            }
-
+            inventory.forEach(item => {
+                if (item.name === product.name) {
+                    item.stock += product.quantity;
+                }
+            });
             cart.splice(index, 1);
-            saveCart();
-            saveInventory();
-            renderCart();
-            renderInventory();
-        }
-
-        function removeFromInventory(index) {
-            inventory.splice(index, 1);
-            saveInventory();
-            renderInventory();
-        }
-
-        function finalizeSale() {
-            cart = [];
-            total = 0;
-            saveCart();
-            renderCart();
-            alert("Venta completada.");
-            clearFields();
-        }
-
-        function clearCart() {
-            cart = [];
-            total = 0;
-            saveCart();
-            renderCart();
-            document.getElementById('cashReceived').value = '';
-            document.getElementById('change').innerText = '0.00';
+            localStorage.setItem('inventory', JSON.stringify(inventory));
+            displayInventory();
+            displayCart();
         }
 
         function calculateChange() {
-            const cashReceived = parseFloat(document.getElementById('cashReceived').value);
-
-            if (!isNaN(cashReceived) && cashReceived >= total) {
-                const change = cashReceived - total;
-                document.getElementById('change').innerText = change.toFixed(2);
-            } else {
-                alert("El efectivo no es suficiente o el valor ingresado es incorrecto.");
-            }
+            const cashReceived = document.getElementById('cashReceived').value;
+            const total = document.getElementById('total').innerText;
+            const change = cashReceived - total;
+            document.getElementById('change').innerText = change;
         }
 
-        function saveInventory() {
-            localStorage.setItem('inventory', JSON.stringify(inventory));
+        function finalizeSale() {
+            document.getElementById('cashReceived').value = '';
+            document.getElementById('change').innerText = '0';
+            cart = [];
+            displayCart();
         }
 
-        function loadInventory() {
-            const storedInventory = localStorage.getItem('inventory');
-            if (storedInventory) {
-                inventory = JSON.parse(storedInventory);
-                renderInventory();
-            }
-        }
-
-        function saveCart() {
-            localStorage.setItem('cart', JSON.stringify(cart));
-            localStorage.setItem('total', total.toFixed(2));
-        }
-
-        function loadCart() {
-            const storedCart = localStorage.getItem('cart');
-            const storedTotal = localStorage.getItem('total');
-            if (storedCart && storedTotal) {
-                cart = JSON.parse(storedCart);
-                total = parseFloat(storedTotal);
-                renderCart();
-            }
-        }
-
-        function clearProductForm() {
+        function clearFields() {
             document.getElementById('productName').value = '';
             document.getElementById('productPrice').value = '';
-            document.getElementById('productQuantity').value = '';
             document.getElementById('productImage').value = '';
+            document.getElementById('productStock').value = '';
+            document.querySelectorAll('.quantity').forEach(input => input.value = '');
         }
 
+        displayInventory();
     </script>
 </body>
 </html>
